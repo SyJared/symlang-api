@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "https://symlang-api.onrender.com")
+@CrossOrigin(origins = "https://symmon-portfolio.vercel.app")
 public class RunController {
 
     @PostMapping("/run")
