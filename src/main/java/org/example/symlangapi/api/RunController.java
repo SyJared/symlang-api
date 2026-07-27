@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "https://your-actual-portfolio-domain.com")
 public class RunController {
 
     @PostMapping("/run")
