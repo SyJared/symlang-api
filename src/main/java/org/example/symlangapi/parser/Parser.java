@@ -3,6 +3,7 @@ package org.example.symlangapi.parser;
 import org.example.symlangapi.ast.*;
 import org.example.symlangapi.lexer.Token;
 import org.example.symlangapi.lexer.TokenType;
+import org.example.symlangapi.language.Language;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +12,15 @@ public class Parser {
 
     private List<Token> tokens;
     private int current = 0;
+    private final Language language;
 
     public Parser(List<Token> tokens){
+        this(tokens, Language.ENGLISH);
+    }
+
+    public Parser(List<Token> tokens, Language language){
         this.tokens = tokens;
+        this.language = language;
     }
 
     private Token peek(){
@@ -36,7 +43,7 @@ public class Parser {
         }
 
         throw new RuntimeException(
-                "Expected " + expected + " but found " + currentToken.getType()
+                language.message("expectedPrefix") + expected + language.message("expectedMiddle") + currentToken.getType() + " at line " + currentToken.getLine()
         );
     }
 
@@ -97,7 +104,7 @@ public class Parser {
             return expr;
         }
 
-        throw new RuntimeException("Expected primary expression");
+        throw new RuntimeException(language.message("primary") + " at line " + token.getLine());
     }
 
     private Expression parseUnary() {
@@ -221,7 +228,7 @@ public class Parser {
             return parseIdentifierStatement();
         }
 
-        throw new RuntimeException("Expected statement but found " + peek().getType());
+        throw new RuntimeException(language.message("statementPrefix") + peek().getType() + " at line " + peek().getLine());
     }
 
     private VariableDeclaration parseVariableDeclaration() {
@@ -351,6 +358,7 @@ public class Parser {
 
         List<Statement> statements = new ArrayList<>();
         while (peek().getType() != TokenType.RIGHT_BRACE) {
+            if (peek().getType() == TokenType.EOF) throw new RuntimeException(language.message("unexpectedEof") + " at line " + peek().getLine());
             statements.add(parseStatement());
         }
 

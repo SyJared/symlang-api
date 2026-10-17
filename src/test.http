@@ -4,3 +4,12 @@ Content-Type: application/json
 {
   "code": "function factorial(n) { if (n <= 1) { return 1; } else { return n * factorial(n - 1); } } print(\"5! =\", factorial(5));"
 }
+
+### Tagalog factorial
+POST http://localhost:8080/run
+Content-Type: application/json
+
+{
+  "lang": "tl",
+  "code": "gawain factorial(n) { kung (n <= 1) { ibalik 1; } kundi { ibalik n * factorial(n - 1); } } ilimbag(\"5! =\", factorial(5));"
+}

@@ -1,6 +1,7 @@
 package org.example.symlangapi.interpreter;
 
 import org.example.symlangapi.ast.*;
+import org.example.symlangapi.language.Language;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,16 +15,22 @@ public class Interpreter {
 
     private final Environment globalScope = new Environment();
     private final Consumer<String> printSink;
+    private final Language language;
     private int steps = 0;
 
     // Default constructor: behaves like your original console version
     public Interpreter() {
-        this(System.out::println);
+        this(System.out::println, Language.ENGLISH);
     }
 
     // API version: pass a sink that collects output into a list instead of printing
     public Interpreter(Consumer<String> printSink) {
+        this(printSink, Language.ENGLISH);
+    }
+
+    public Interpreter(Consumer<String> printSink, Language language) {
         this.printSink = printSink;
+        this.language = language;
     }
 
     public void interpret(List<Statement> program) {
@@ -40,7 +47,7 @@ public class Interpreter {
         steps++;
         if (steps > MAX_STEPS) {
             throw new RuntimeException(
-                    "Execution stopped: exceeded " + MAX_STEPS + " steps (possible infinite loop)"
+                    language.message("stepPrefix") + MAX_STEPS + language.message("stepSuffix")
             );
         }
     }
@@ -88,7 +95,7 @@ public class Interpreter {
             return;
         }
 
-        throw new RuntimeException("Unknown statement");
+        throw new RuntimeException(language.message("unknownStatement"));
     }
 
     private void executeVariableDeclaration(VariableDeclaration declaration, Environment scope) {
@@ -125,7 +132,7 @@ public class Interpreter {
         Object arrayObj = scope.get(indexAssignment.getArrayName());
 
         if (!(arrayObj instanceof List)) {
-            throw new RuntimeException(indexAssignment.getArrayName() + " is not an array");
+            throw new RuntimeException(indexAssignment.getArrayName() + language.message("notArraySuffix"));
         }
 
         List<Object> list = (List<Object>) arrayObj;
@@ -185,7 +192,7 @@ public class Interpreter {
             return evaluateFunctionCall(call, scope);
         }
 
-        throw new RuntimeException("Unknown expression");
+        throw new RuntimeException(language.message("unknownExpression"));
     }
 
     private int evaluateNumber(NumberLiteral number) {
@@ -213,7 +220,7 @@ public class Interpreter {
         Object arrayObj = evaluate(indexExpression.getArray(), scope);
 
         if (!(arrayObj instanceof List<?> list)) {
-            throw new RuntimeException("Cannot index a non-array value");
+            throw new RuntimeException(language.message("indexNonArray"));
         }
 
         int index = (Integer) evaluate(indexExpression.getIndex(), scope);
@@ -246,7 +253,7 @@ public class Interpreter {
             case MINUS -> left - right;
             case TIMES -> left * right;
             case DIVIDE -> left / right;
-            default -> throw new RuntimeException("Unknown operator");
+            default -> throw new RuntimeException(language.message("unknownOperator"));
         };
     }
 
@@ -261,7 +268,7 @@ public class Interpreter {
             case LESS -> left < right;
             case LESS_EQUAL -> left <= right;
             case BANG_EQUAL -> left != right;
-            default -> throw new RuntimeException("Unknown operator");
+            default -> throw new RuntimeException(language.message("unknownOperator"));
         };
     }
 
@@ -271,14 +278,14 @@ public class Interpreter {
 
     private Object evaluateFunctionCall(FunctionCall call, Environment scope) {
 
-        if (call.getName().equals("print")) {
+        if (call.getName().equals(language.printName())) {
             return evaluatePrintCall(call, scope);
         }
 
         Object callee = scope.get(call.getName());
 
         if (!(callee instanceof FunctionValue function)) {
-            throw new RuntimeException(call.getName() + " is not a function");
+            throw new RuntimeException(call.getName() + language.message("notFunctionSuffix"));
         }
 
         FunctionDeclaration declaration = function.getDeclaration();
@@ -287,7 +294,7 @@ public class Interpreter {
 
         if (parameters.size() != arguments.size()) {
             throw new RuntimeException(
-                    "Expected " + parameters.size() + " arguments but got " + arguments.size()
+                    language.message("argumentsPrefix") + parameters.size() + language.message("argumentsMiddle") + arguments.size()
             );
         }
 

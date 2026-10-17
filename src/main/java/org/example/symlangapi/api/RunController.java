@@ -5,6 +5,7 @@ import org.example.symlangapi.interpreter.FunctionValue;
 import org.example.symlangapi.interpreter.Interpreter;
 import org.example.symlangapi.lexer.Lexer;
 import org.example.symlangapi.lexer.Token;
+import org.example.symlangapi.language.Language;
 import org.example.symlangapi.parser.Parser;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,16 +23,22 @@ public class RunController {
 
         List<String> output = new ArrayList<>();
 
+        Language language;
+        String lang = request.getLang() == null || request.getLang().isBlank() ? "en" : request.getLang();
+        if (lang.equalsIgnoreCase("en")) language = Language.ENGLISH;
+        else if (lang.equalsIgnoreCase("tl")) language = Language.TAGALOG;
+        else return new RunResponse(output, Map.of(), "Unsupported language: " + lang + " (supported: en, tl)");
+
         try {
             String source = request.getCode();
 
-            Lexer lexer = new Lexer(source);
+            Lexer lexer = new Lexer(source, language);
             List<Token> tokens = lexer.lex();
 
-            Parser parser = new Parser(tokens);
+            Parser parser = new Parser(tokens, language);
             List<Statement> program = parser.parseProgram();
 
-            Interpreter interpreter = new Interpreter(output::add);
+            Interpreter interpreter = new Interpreter(output::add, language);
             interpreter.interpret(program);
 
             Map<String, Object> rawVariables = interpreter.getGlobalScope().snapshot();
@@ -40,7 +47,7 @@ public class RunController {
             return new RunResponse(output, variables, null);
 
         } catch (StackOverflowError e) {
-            return new RunResponse(output, Map.of(), "Stack overflow — likely unbounded recursion");
+            return new RunResponse(output, Map.of(), language.message("stackOverflow"));
         } catch (RuntimeException e) {
             return new RunResponse(output, Map.of(), e.getMessage());
         }
